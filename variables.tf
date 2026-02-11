@@ -43,7 +43,7 @@ EOT
     resource_group_name    = string
     analytical_storage_ttl = optional(number)
     default_ttl            = optional(number)
-    partition_key_kind     = optional(string, "Hash")
+    partition_key_kind     = optional(string) # Default: "Hash"
     partition_key_version  = optional(number)
     throughput             = optional(number)
     autoscale_settings = optional(object({
@@ -56,10 +56,10 @@ EOT
     }))
     indexing_policy = optional(object({
       composite_index = optional(object({
-        index = object({
+        index = list(object({
           order = string
           path  = string
-        })
+        }))
       }))
       excluded_path = optional(object({
         path = string
@@ -67,7 +67,7 @@ EOT
       included_path = optional(object({
         path = string
       }))
-      indexing_mode = optional(string, "consistent")
+      indexing_mode = optional(string) # Default: "consistent"
       spatial_index = optional(object({
         path = string
       }))
@@ -76,5 +76,13 @@ EOT
       paths = set(string)
     }))
   }))
+  validation {
+    condition = alltrue([
+      for k, v in var.cosmosdb_sql_containers : (
+        length(v.indexing_policy.composite_index.index) >= 1
+      )
+    ])
+    error_message = "Each index list must contain at least 1 items"
+  }
 }
 
