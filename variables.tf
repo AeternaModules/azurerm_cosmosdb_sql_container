@@ -79,7 +79,7 @@ EOT
   validation {
     condition = alltrue([
       for k, v in var.cosmosdb_sql_containers : (
-        v.indexing_policy.composite_index == null || alltrue([for item in v.indexing_policy.composite_index : (length(item.index) >= 1)])
+        v.indexing_policy == null || (v.indexing_policy.composite_index == null || alltrue([for item in v.indexing_policy.composite_index : (length(item.index) >= 1)]))
       )
     ])
     error_message = "Each index list must contain at least 1 items"
