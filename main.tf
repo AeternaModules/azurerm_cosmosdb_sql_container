@@ -32,7 +32,7 @@ resource "azurerm_cosmosdb_sql_container" "cosmosdb_sql_containers" {
     for_each = each.value.indexing_policy != null ? [each.value.indexing_policy] : []
     content {
       dynamic "composite_index" {
-        for_each = indexing_policy.value.composite_index != null ? [indexing_policy.value.composite_index] : []
+        for_each = indexing_policy.value.composite_index != null ? indexing_policy.value.composite_index : []
         content {
           dynamic "index" {
             for_each = composite_index.value.index
@@ -44,20 +44,20 @@ resource "azurerm_cosmosdb_sql_container" "cosmosdb_sql_containers" {
         }
       }
       dynamic "excluded_path" {
-        for_each = indexing_policy.value.excluded_path != null ? [indexing_policy.value.excluded_path] : []
+        for_each = indexing_policy.value.excluded_path != null ? indexing_policy.value.excluded_path : []
         content {
           path = excluded_path.value.path
         }
       }
       dynamic "included_path" {
-        for_each = indexing_policy.value.included_path != null ? [indexing_policy.value.included_path] : []
+        for_each = indexing_policy.value.included_path != null ? indexing_policy.value.included_path : []
         content {
           path = included_path.value.path
         }
       }
       indexing_mode = indexing_policy.value.indexing_mode
       dynamic "spatial_index" {
-        for_each = indexing_policy.value.spatial_index != null ? [indexing_policy.value.spatial_index] : []
+        for_each = indexing_policy.value.spatial_index != null ? indexing_policy.value.spatial_index : []
         content {
           path = spatial_index.value.path
         }
@@ -66,7 +66,7 @@ resource "azurerm_cosmosdb_sql_container" "cosmosdb_sql_containers" {
   }
 
   dynamic "unique_key" {
-    for_each = each.value.unique_key != null ? [each.value.unique_key] : []
+    for_each = each.value.unique_key != null ? each.value.unique_key : []
     content {
       paths = unique_key.value.paths
     }

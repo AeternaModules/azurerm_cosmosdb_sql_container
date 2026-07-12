@@ -55,106 +55,34 @@ EOT
       mode                          = string
     }))
     indexing_policy = optional(object({
-      composite_index = optional(object({
+      composite_index = optional(list(object({
         index = list(object({
           order = string
           path  = string
         }))
-      }))
-      excluded_path = optional(object({
+      })))
+      excluded_path = optional(list(object({
         path = string
-      }))
-      included_path = optional(object({
+      })))
+      included_path = optional(list(object({
         path = string
-      }))
+      })))
       indexing_mode = optional(string) # Default: "consistent"
-      spatial_index = optional(object({
+      spatial_index = optional(list(object({
         path = string
-      }))
+      })))
     }))
-    unique_key = optional(object({
+    unique_key = optional(list(object({
       paths = set(string)
-    }))
+    })))
   }))
   validation {
     condition = alltrue([
       for k, v in var.cosmosdb_sql_containers : (
-        length(v.indexing_policy.composite_index.index) >= 1
+        v.indexing_policy.composite_index == null || alltrue([for item in v.indexing_policy.composite_index : (length(item.index) >= 1)])
       )
     ])
     error_message = "Each index list must contain at least 1 items"
-  }
-  validation {
-    condition = alltrue([
-      for k, v in var.cosmosdb_sql_containers : (
-        length(v.partition_key_paths) > 0
-      )
-    ])
-    error_message = "must not be empty"
-  }
-  validation {
-    condition = alltrue([
-      for k, v in var.cosmosdb_sql_containers : (
-        v.partition_key_version == null || (v.partition_key_version >= 1 && v.partition_key_version <= 2)
-      )
-    ])
-    error_message = "must be between 1 and 2"
-  }
-  validation {
-    condition = alltrue([
-      for k, v in var.cosmosdb_sql_containers : (
-        v.conflict_resolution_policy == null || (v.conflict_resolution_policy.conflict_resolution_path == null || (length(v.conflict_resolution_policy.conflict_resolution_path) > 0))
-      )
-    ])
-    error_message = "must not be empty"
-  }
-  validation {
-    condition = alltrue([
-      for k, v in var.cosmosdb_sql_containers : (
-        v.conflict_resolution_policy == null || (v.conflict_resolution_policy.conflict_resolution_procedure == null || (length(v.conflict_resolution_policy.conflict_resolution_procedure) > 0))
-      )
-    ])
-    error_message = "must not be empty"
-  }
-  validation {
-    condition = alltrue([
-      for k, v in var.cosmosdb_sql_containers : (
-        v.analytical_storage_ttl == null || (v.analytical_storage_ttl >= -1)
-      )
-    ])
-    error_message = "must be at least -1"
-  }
-  validation {
-    condition = alltrue([
-      for k, v in var.cosmosdb_sql_containers : (
-        v.default_ttl == null || (v.default_ttl >= -1)
-      )
-    ])
-    error_message = "must be at least -1"
-  }
-  validation {
-    condition = alltrue([
-      for k, v in var.cosmosdb_sql_containers : (
-        v.unique_key == null || (length(v.unique_key.paths) > 0)
-      )
-    ])
-    error_message = "must not be empty"
-  }
-  validation {
-    condition = alltrue([
-      for k, v in var.cosmosdb_sql_containers : (
-        v.indexing_policy == null || (v.indexing_policy.included_path == null || (length(v.indexing_policy.included_path.path) > 0))
-      )
-    ])
-    error_message = "must not be empty"
-  }
-  validation {
-    condition = alltrue([
-      for k, v in var.cosmosdb_sql_containers : (
-        v.indexing_policy == null || (v.indexing_policy.excluded_path == null || (length(v.indexing_policy.excluded_path.path) > 0))
-      )
-    ])
-    error_message = "must not be empty"
   }
   # --- Unconfirmed validation candidates, derived from azurerm_cosmosdb_sql_container's provider source ---
   # Not auto-enabled: either a bespoke provider validator we can't safely translate,
@@ -180,10 +108,22 @@ EOT
   #   source:    [from validate.CosmosAccountName] !matched
   # path: database_name
   #   source:    [from validate.CosmosEntityName] len(value) < 1 || len(value) > 255
+  # path: partition_key_paths[*]
+  #   condition: length(value) > 0
+  #   message:   must not be empty
   # path: partition_key_kind
   #   source:    validation.StringInSlice value list is not a literal []string - likely a generated PossibleValuesFor*() helper; resolve separately
+  # path: partition_key_version
+  #   condition: value >= 1 && value <= 2
+  #   message:   must be between 1 and 2
   # path: conflict_resolution_policy.mode
   #   source:    validation.StringInSlice value list is not a literal []string - likely a generated PossibleValuesFor*() helper; resolve separately
+  # path: conflict_resolution_policy.conflict_resolution_path
+  #   condition: length(value) > 0
+  #   message:   must not be empty
+  # path: conflict_resolution_policy.conflict_resolution_procedure
+  #   condition: length(value) > 0
+  #   message:   must not be empty
   # path: throughput
   #   source:    [from validate.CosmosThroughput] value < 400
   # path: throughput
@@ -194,7 +134,22 @@ EOT
   #   source:    [from validate.CosmosMaxThroughput] v < 1000
   # path: autoscale_settings.max_throughput
   #   source:    [from validate.CosmosMaxThroughput] v%1000 != 0
+  # path: analytical_storage_ttl
+  #   condition: value >= -1
+  #   message:   must be at least -1
+  # path: default_ttl
+  #   condition: value >= -1
+  #   message:   must be at least -1
+  # path: unique_key.paths[*]
+  #   condition: length(value) > 0
+  #   message:   must not be empty
   # path: indexing_policy.indexing_mode
   #   source:    validation.StringInSlice value list is not a literal []string - likely a generated PossibleValuesFor*() helper; resolve separately
+  # path: indexing_policy.included_path.path
+  #   condition: length(value) > 0
+  #   message:   must not be empty
+  # path: indexing_policy.excluded_path.path
+  #   condition: length(value) > 0
+  #   message:   must not be empty
 }
 
