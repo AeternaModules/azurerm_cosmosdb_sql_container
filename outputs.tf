@@ -1,3 +1,7 @@
+output "cosmosdb_sql_containers_id" {
+  description = "Map of id values across all cosmosdb_sql_containers, keyed the same as var.cosmosdb_sql_containers"
+  value       = { for k, v in azurerm_cosmosdb_sql_container.cosmosdb_sql_containers : k => v.id }
+}
 output "cosmosdb_sql_containers_account_name" {
   description = "Map of account_name values across all cosmosdb_sql_containers, keyed the same as var.cosmosdb_sql_containers"
   value       = { for k, v in azurerm_cosmosdb_sql_container.cosmosdb_sql_containers : k => v.account_name }
