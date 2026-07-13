@@ -43,7 +43,7 @@ EOT
     resource_group_name    = string
     analytical_storage_ttl = optional(number)
     default_ttl            = optional(number)
-    partition_key_kind     = optional(string) # Default: "Hash"
+    partition_key_kind     = optional(string)
     partition_key_version  = optional(number)
     throughput             = optional(number)
     autoscale_settings = optional(object({
@@ -67,7 +67,7 @@ EOT
       included_path = optional(list(object({
         path = string
       })))
-      indexing_mode = optional(string) # Default: "consistent"
+      indexing_mode = optional(string)
       spatial_index = optional(list(object({
         path = string
       })))
@@ -149,6 +149,14 @@ EOT
   #   condition: length(value) > 0
   #   message:   must not be empty
   # path: indexing_policy.excluded_path.path
+  #   condition: length(value) > 0
+  #   message:   must not be empty
+  # path: indexing_policy.composite_index.index.path
+  #   condition: length(value) > 0
+  #   message:   must not be empty
+  # path: indexing_policy.composite_index.index.order
+  #   source:    validation.StringInSlice value list is not a literal []string - likely a generated PossibleValuesFor*() helper; resolve separately
+  # path: indexing_policy.spatial_index.path
   #   condition: length(value) > 0
   #   message:   must not be empty
 }
