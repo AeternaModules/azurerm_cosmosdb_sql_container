@@ -84,80 +84,118 @@ EOT
     ])
     error_message = "Each index list must contain at least 1 items"
   }
-  # --- Unconfirmed validation candidates, derived from azurerm_cosmosdb_sql_container's provider source ---
-  # Not auto-enabled: either a bespoke provider validator we can't safely translate,
-  # or a path that crosses a list-typed block (needs its own for_each wrapping).
-  # Review, translate into a real validation{} block above, and delete once confirmed.
-  # path: name
-  #   source:    [from validate.CosmosEntityName] len(value) < 1 || len(value) > 255
-  # path: resource_group_name
-  #   condition: length(value) <= 90
-  #   message:   [from resourcegroups.ValidateName: invalid when len(value) > 90]
-  #   source:    [from resourcegroups.ValidateName: invalid when len(value) > 90]
-  # path: resource_group_name
-  #   condition: !endswith(value, ".")
-  #   message:   [from resourcegroups.ValidateName: must not end with "."]
-  #   source:    [from resourcegroups.ValidateName: must not end with "."]
-  # path: resource_group_name
-  #   condition: length(value) != 0
-  #   message:   [from resourcegroups.ValidateName: invalid when len(value) == 0]
-  #   source:    [from resourcegroups.ValidateName: invalid when len(value) == 0]
-  # path: resource_group_name
-  #   source:    [from resourcegroups.ValidateName] !matched
-  # path: account_name
-  #   source:    [from validate.CosmosAccountName] !matched
-  # path: database_name
-  #   source:    [from validate.CosmosEntityName] len(value) < 1 || len(value) > 255
-  # path: partition_key_paths[*]
-  #   condition: length(value) > 0
-  #   message:   must not be empty
-  # path: partition_key_kind
-  #   source:    validation.StringInSlice value list is not a literal []string - likely a generated PossibleValuesFor*() helper; resolve separately
-  # path: partition_key_version
-  #   condition: value >= 1 && value <= 2
-  #   message:   must be between 1 and 2
-  # path: conflict_resolution_policy.mode
-  #   source:    validation.StringInSlice value list is not a literal []string - likely a generated PossibleValuesFor*() helper; resolve separately
-  # path: conflict_resolution_policy.conflict_resolution_path
-  #   condition: length(value) > 0
-  #   message:   must not be empty
-  # path: conflict_resolution_policy.conflict_resolution_procedure
-  #   condition: length(value) > 0
-  #   message:   must not be empty
-  # path: throughput
-  #   source:    [from validate.CosmosThroughput] value < 400
-  # path: throughput
-  #   source:    [from validate.CosmosThroughput] value%100 != 0
-  # path: autoscale_settings.max_throughput
-  #   source:    [from validate.CosmosMaxThroughput] !ok
-  # path: autoscale_settings.max_throughput
-  #   source:    [from validate.CosmosMaxThroughput] v < 1000
-  # path: autoscale_settings.max_throughput
-  #   source:    [from validate.CosmosMaxThroughput] v%1000 != 0
-  # path: analytical_storage_ttl
-  #   condition: value >= -1
-  #   message:   must be at least -1
-  # path: default_ttl
-  #   condition: value >= -1
-  #   message:   must be at least -1
-  # path: unique_key.paths[*]
-  #   condition: length(value) > 0
-  #   message:   must not be empty
-  # path: indexing_policy.indexing_mode
-  #   source:    validation.StringInSlice value list is not a literal []string - likely a generated PossibleValuesFor*() helper; resolve separately
-  # path: indexing_policy.included_path.path
-  #   condition: length(value) > 0
-  #   message:   must not be empty
-  # path: indexing_policy.excluded_path.path
-  #   condition: length(value) > 0
-  #   message:   must not be empty
-  # path: indexing_policy.composite_index.index.path
-  #   condition: length(value) > 0
-  #   message:   must not be empty
-  # path: indexing_policy.composite_index.index.order
-  #   source:    validation.StringInSlice value list is not a literal []string - likely a generated PossibleValuesFor*() helper; resolve separately
-  # path: indexing_policy.spatial_index.path
-  #   condition: length(value) > 0
-  #   message:   must not be empty
+  validation {
+    condition = alltrue([
+      for k, v in var.cosmosdb_sql_containers : (
+        length(v.resource_group_name) <= 90
+      )
+    ])
+    error_message = "[from resourcegroups.ValidateName: invalid when len(value) > 90]"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.cosmosdb_sql_containers : (
+        !endswith(v.resource_group_name, ".")
+      )
+    ])
+    error_message = "[from resourcegroups.ValidateName: must not end with \".\"]"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.cosmosdb_sql_containers : (
+        length(v.resource_group_name) != 0
+      )
+    ])
+    error_message = "[from resourcegroups.ValidateName: invalid when len(value) == 0]"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.cosmosdb_sql_containers : (
+        alltrue([for x in v.partition_key_paths : length(x) > 0])
+      )
+    ])
+    error_message = "must not be empty"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.cosmosdb_sql_containers : (
+        v.partition_key_version == null || (v.partition_key_version >= 1 && v.partition_key_version <= 2)
+      )
+    ])
+    error_message = "must be between 1 and 2"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.cosmosdb_sql_containers : (
+        v.conflict_resolution_policy == null || (v.conflict_resolution_policy.conflict_resolution_path == null || (length(v.conflict_resolution_policy.conflict_resolution_path) > 0))
+      )
+    ])
+    error_message = "must not be empty"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.cosmosdb_sql_containers : (
+        v.conflict_resolution_policy == null || (v.conflict_resolution_policy.conflict_resolution_procedure == null || (length(v.conflict_resolution_policy.conflict_resolution_procedure) > 0))
+      )
+    ])
+    error_message = "must not be empty"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.cosmosdb_sql_containers : (
+        v.analytical_storage_ttl == null || (v.analytical_storage_ttl >= -1)
+      )
+    ])
+    error_message = "must be at least -1"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.cosmosdb_sql_containers : (
+        v.default_ttl == null || (v.default_ttl >= -1)
+      )
+    ])
+    error_message = "must be at least -1"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.cosmosdb_sql_containers : (
+        v.unique_key == null || alltrue([for item in v.unique_key : (alltrue([for x in item.paths : length(x) > 0]))])
+      )
+    ])
+    error_message = "must not be empty"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.cosmosdb_sql_containers : (
+        v.indexing_policy == null || (v.indexing_policy.included_path == null || alltrue([for item in v.indexing_policy.included_path : (length(item.path) > 0)]))
+      )
+    ])
+    error_message = "must not be empty"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.cosmosdb_sql_containers : (
+        v.indexing_policy == null || (v.indexing_policy.excluded_path == null || alltrue([for item in v.indexing_policy.excluded_path : (length(item.path) > 0)]))
+      )
+    ])
+    error_message = "must not be empty"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.cosmosdb_sql_containers : (
+        v.indexing_policy == null || (v.indexing_policy.composite_index == null || alltrue([for item in v.indexing_policy.composite_index : (alltrue([for item in item.index : (length(item.path) > 0)]))]))
+      )
+    ])
+    error_message = "must not be empty"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.cosmosdb_sql_containers : (
+        v.indexing_policy == null || (v.indexing_policy.spatial_index == null || alltrue([for item in v.indexing_policy.spatial_index : (length(item.path) > 0)]))
+      )
+    ])
+    error_message = "must not be empty"
+  }
+  # Note: 13 additional provider-side validators are enforced at apply time but not mirrored as validation{} blocks here (bespoke or non-mechanically-translatable).
 }
 
